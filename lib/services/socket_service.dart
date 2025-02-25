@@ -7,6 +7,8 @@ class ChatService {
   late IO.Socket socket;
   RTCPeerConnection? peerConnection;
   MediaStream? localStream;
+  Function(MediaStream)? onRemoteStream;
+  String? currentCallId;
 
   final Map<String, dynamic> configuration = {
     "iceServers": [
@@ -15,8 +17,12 @@ class ChatService {
     ]
   };
 
-  void connect(context, String? token, String? rideId,
-      Function(Map<String, dynamic>)? onMessageReceived, isUpdateLocation) {
+  void connect(
+      context,
+      String? token,
+      Function(Map<String, dynamic>)? onMessageReceived,
+      Function(MediaStream) onRemoteStream) {
+    this.onRemoteStream = onRemoteStream;
     socket = IO.io(ApiEndpoints.baseUrl, <String, dynamic>{
       'transports': ['websocket'],
       'auth': {
@@ -52,9 +58,20 @@ class ChatService {
       print(data);
     });
 
-    socket.on('incoming-call', (data) {
-      print('Call initiated with ID: ${data['callId']}');
+    // socket.on('incoming-call', (data) {
+    //   print('Call initiated with ID: ${data['callId']}');
+    //   print('Incoming call from: ${data['caller']}');
+    // });
+    socket.on('incoming-call', (data) async {
+      currentCallId = data['callId'];
       print('Incoming call from: ${data['caller']}');
+      // onMessageReceived!(data);
+      //
+
+      socket.emit('accept-call', {'callId': currentCallId});
+      setupWebRTC(isCaller: false);
+      // Navigator.push(
+      //     context, MaterialPageRoute(builder: (_) => InCallScreen()));
     });
 
     socket.on('call-initiated', (data) {
@@ -63,11 +80,12 @@ class ChatService {
 
     socket.on('offer', (data) async {
       print('Received offer');
-      await _handleOffer(data['offer']);
+      await _handleOffer(data);
     });
 
     socket.on('answer', (data) async {
       print('Received answer');
+      //  print("recieve Answer: ${data.sdp}");
       await peerConnection?.setRemoteDescription(
           RTCSessionDescription(data['answer'], 'answer'));
     });
@@ -75,14 +93,14 @@ class ChatService {
     socket.on('ice-candidate', (data) async {
       print('Received ICE candidate');
       await peerConnection?.addCandidate(
-        RTCIceCandidate(data['candidate']['candidate'],
-            data['candidate']['sdpMid'], data['candidate']['sdpMLineIndex']),
+        RTCIceCandidate(
+            data['candidate'], data['sdpMid'], data['sdpMLineIndex']),
       );
     });
 
     socket.on('call-ended', (_) {
       print('Call ended');
-      _endCall();
+      endCalls();
     });
 
     socket.onDisconnect((_) {
@@ -102,53 +120,65 @@ class ChatService {
     }
   }
 
-  void requestPartnerList() {
-    socket.emit('getListOfPartner');
-  }
-
-  Future<void> initiateCall(String partnerId) async {
-    socket.emit('initiate-call', {'partnerId': partnerId});
-  }
-
   Future<void> acceptCall(String callId) async {
     socket.emit('accept-call', {'callId': callId});
-    await _setupWebRTC();
+    //  await _setupWebRTC();
   }
 
-  Future<void> _setupWebRTC() async {
+  Future<void> setupWebRTC({required bool isCaller}) async {
     peerConnection = await createPeerConnection(configuration);
-    localStream = await navigator.mediaDevices.getUserMedia({
-      'audio': true,
-      'video': true,
-    });
-    localStream?.getTracks().forEach((track) {
-      peerConnection?.addTrack(track, localStream!);
-    });
+    // localStream = await navigator.mediaDevices.getUserMedia({
+    //   'audio': true,
+    //   'video': false,
+    // });
+    // localStream?.getTracks().forEach((track) {
+    //   peerConnection?.addTrack(track, localStream!);
+    // });
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({
+        'audio': true,
+        'video': false,
+      });
+
+      localStream?.getAudioTracks().forEach((track) {
+        peerConnection?.addTrack(track, localStream!);
+      });
+    } catch (e) {
+      print("Error getting user media: $e");
+      return; // Stop setup if media access fails
+    }
 
     peerConnection?.onIceCandidate = (candidate) {
-      socket.emit('ice-candidate', {'candidate': candidate.toMap()});
+      socket.emit('ice-candidate',
+          {'callId': currentCallId, 'candidate': candidate.toMap()});
     };
 
     peerConnection?.onTrack = (event) {
-      // TODO: Attach remote video stream to UI
+      if (event.track.kind == 'audio' && event.streams.isNotEmpty) {
+        onRemoteStream?.call(event.streams[0]);
+      }
     };
   }
 
-  Future<void> _handleOffer(String offer) async {
-    await _setupWebRTC();
-    await peerConnection
-        ?.setRemoteDescription(RTCSessionDescription(offer, 'offer'));
-    RTCSessionDescription answer = await peerConnection!.createAnswer();
-    await peerConnection!.setLocalDescription(answer);
-    socket.emit('answer', {'answer': answer.sdp});
+  Future<void> _handleOffer(offer) async {
+    // print("Received Offer: ${offer['sdp']}");
+    if (peerConnection != null) {
+      await peerConnection!
+          .setRemoteDescription(RTCSessionDescription(offer, 'offer'));
+      RTCSessionDescription answer = await peerConnection!.createAnswer();
+      await peerConnection!.setLocalDescription(answer);
+      socket.emit('answer', {'callId': currentCallId, 'answer': answer.sdp});
+      //  print("Sending Answer: ${answer.sdp}");
+    } else {
+      print("Error: peerConnection is null!");
+    }
   }
 
-  void endCall(String callId) {
-    socket.emit('end-call', {'callId': callId});
-    _endCall();
+  void endCall() {
+    socket.emit('end-call', {'callId': currentCallId});
   }
 
-  void _endCall() {
+  void endCalls() {
     peerConnection?.close();
     localStream?.dispose();
     peerConnection = null;

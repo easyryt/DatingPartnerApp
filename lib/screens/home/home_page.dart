@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:gad_fly_partner/controller/main_application_controller.dart';
 import 'package:gad_fly_partner/controller/profile_controller.dart';
+import 'package:gad_fly_partner/screens/home/incoming_call.dart';
 import 'package:gad_fly_partner/screens/home/profile/profile.dart';
 import 'package:gad_fly_partner/screens/home/profile/profile_create_screen.dart';
 import 'package:gad_fly_partner/services/socket_service.dart';
@@ -17,6 +19,7 @@ class _HomePageState extends State<HomePage> {
   MainApplicationController mainApplicationController = Get.find();
   ProfileController profileController = Get.put(ProfileController());
   bool isLoading = false;
+  MediaStream? remoteStream;
 
   final List<String> statusOptions = ['Online', 'Offline'];
   ChatService chatService = ChatService();
@@ -28,13 +31,33 @@ class _HomePageState extends State<HomePage> {
       }
     });
     if (mainApplicationController.authToken.value != "") {
-      chatService.connect(context, mainApplicationController.authToken.value,
-          "", _onRequestAccepted, false);
+      chatService.connect(
+        context,
+        mainApplicationController.authToken.value,
+        _onRequestAccepted,
+        (MediaStream stream) {
+          setState(() {
+            remoteStream = stream;
+          });
+          print("Remote stream received");
+        },
+      );
     }
     super.initState();
   }
 
-  void _onRequestAccepted(Map<String, dynamic> data) async {}
+  void _onRequestAccepted(Map<String, dynamic> data) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => IncomingCallScreen(
+          callerName: data['caller']["name"],
+          chatService: chatService,
+          callId: data['callId'],
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
