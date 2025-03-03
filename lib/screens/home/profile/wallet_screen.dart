@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gad_fly_partner/controller/profile_controller.dart';
+import 'package:get/get.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -8,12 +10,7 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
-  int selectedIndex = 1;
-  final List<Map<String, dynamic>> rechargePacks = [
-    {'amount': 84, 'benefit': 199, 'sale': false},
-    {'amount': 199, 'benefit': 299, 'sale': true},
-    {'amount': 499, 'benefit': 600, 'sale': false},
-  ];
+  ProfileController profileController = Get.find();
 
   @override
   Widget build(BuildContext context) {
@@ -75,9 +72,15 @@ class _WalletScreenState extends State<WalletScreen> {
                         fontSize: 18,
                         fontWeight: FontWeight.w500)),
                 const SizedBox(height: 5),
-                const Text("₹0.00",
-                    style:
-                        TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
+                Obx(() {
+                  return Text(
+                    "₹${profileController.amount.value}",
+                    style: TextStyle(
+                        color: blackColor,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600),
+                  );
+                }),
                 Align(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
@@ -97,62 +100,6 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
           ),
           const SizedBox(height: 28),
-          const Text("Select Recharge Pack",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(rechargePacks.length, (index) {
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedIndex = index;
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        color: selectedIndex == index
-                            ? appColor
-                            : Colors.grey.shade300,
-                        width: 2),
-                    borderRadius: BorderRadius.circular(15),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(color: Colors.grey.shade200, blurRadius: 2),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      if (rechargePacks[index]['sale'])
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Text("Sale 30%",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 10)),
-                        ),
-                      const SizedBox(height: 5),
-                      Text("₹${rechargePacks[index]['amount']}",
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 5),
-                      Text("Get ₹${rechargePacks[index]['benefit']}",
-                          style: const TextStyle(
-                              color: Colors.grey, fontSize: 12)),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ),
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),

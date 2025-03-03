@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:gad_fly_partner/controller/auth_register_controller.dart';
 import 'package:gad_fly_partner/controller/main_application_controller.dart';
 import 'package:gad_fly_partner/screens/home/home_page.dart';
+import 'package:gad_fly_partner/screens/home/profile/profile_create_screen.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pinput/pinput.dart';
@@ -49,33 +50,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     super.dispose();
-    authController.otpTextEditingController.dispose();
-    authController.phoneTextEditingController.dispose();
-    _resendTimer.cancel();
+    authController.otpTextEditingController.clear();
+    authController.phoneTextEditingController.clear();
+    // _resendTimer.cancel();
   }
 
   void startResendTimer() {
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        if (_resendSeconds > 0) {
-          _resendSeconds--;
-        } else {
-          _resendTimer.cancel();
-        }
-      });
+      if (mounted) {
+        setState(() {
+          if (_resendSeconds > 0) {
+            _resendSeconds--;
+          } else {
+            _resendTimer.cancel();
+          }
+        });
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-
-    var whiteColor = Colors.white;
-    var blackColor = Colors.black;
     var appColor = const Color(0xFF8CA6DB);
-    var appYellow = const Color(0xFFFFE30F);
-    var appGreenColor = const Color(0xFF35D673);
-    var greyMedium1Color = const Color(0xFFDBDBDB);
     return isLoggedIn
         ? const HomePage()
         : Scaffold(
@@ -335,7 +332,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         // Global.storageServices
                                         //     .setString("x-auth-token", token);
                                         // Global.apiClient.updateHeader(token);
-                                        Get.to(() => const HomePage());
+                                        Get.to(() => const ProfileCreateScreen(
+                                              isRegistration: true,
+                                            ));
                                       } else {
                                         Get.snackbar(
                                             "error", "Please input a valid otp",
@@ -478,7 +477,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               // Global.storageServices
                                               //     .setString("x-auth-token", token);
                                               // Global.apiClient.updateHeader(token);
-                                              Get.to(() => const HomePage());
+                                              authController
+                                                  .otpTextEditingController
+                                                  .clear();
+                                              authController
+                                                  .phoneTextEditingController
+                                                  .clear();
+                                              authController.sentOtp.value =
+                                                  false;
+                                              Get.to(() =>
+                                                  const ProfileCreateScreen(
+                                                    isRegistration: true,
+                                                  ));
                                             }
                                           } else {
                                             Get.snackbar(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:gad_fly_partner/auth/register_screen.dart';
 import 'package:gad_fly_partner/controller/profile_controller.dart';
 import 'package:gad_fly_partner/screens/home/profile/wallet_screen.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -99,7 +101,15 @@ class _ProfileState extends State<Profile> {
                         _buildSettingsOption(
                             Icons.card_giftcard, 'Refer & Earn'),
                         _buildSettingsOption(Icons.contact_mail, 'Contact Us'),
-                        _buildSettingsOption(Icons.logout, 'Logout'),
+                        GestureDetector(
+                            onTap: () async {
+                              SharedPreferences prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs.clear();
+                              Get.to(() => const RegisterScreen());
+                            },
+                            child:
+                                _buildSettingsOption(Icons.logout, 'Logout')),
                       ],
                     ),
                   ),

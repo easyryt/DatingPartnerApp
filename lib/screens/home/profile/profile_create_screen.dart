@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:gad_fly_partner/controller/main_application_controller.dart';
 import 'package:gad_fly_partner/controller/profile_controller.dart';
+import 'package:gad_fly_partner/screens/home/home_page.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProfileCreateScreen extends StatefulWidget {
-  const ProfileCreateScreen({super.key});
+  final bool isRegistration;
+  const ProfileCreateScreen({super.key, required this.isRegistration});
 
   @override
   State<ProfileCreateScreen> createState() => _ProfileCreateScreenState();
@@ -13,7 +15,7 @@ class ProfileCreateScreen extends StatefulWidget {
 
 class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
   MainApplicationController mainApplicationController = Get.find();
-  ProfileController profileController = Get.find();
+  ProfileController profileController = Get.put(ProfileController());
   bool isLoading = false;
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -89,7 +91,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
           ),
         ),
         title: Text(
-          "Create Profile",
+          "Personal Info ",
           style: GoogleFonts.roboto(
             fontWeight: FontWeight.w500,
             fontSize: 16,
@@ -188,8 +190,12 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                     decoration: const InputDecoration(labelText: 'Voice URL'),
                   ),
                   const SizedBox(height: 20),
-                  Center(
+                  SizedBox(
+                    width: width,
                     child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10))),
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
                           final profileData = {
@@ -217,6 +223,9 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                             if (onValue != null) {
                               Get.snackbar(
                                   "wow", "profile create successfully");
+                              if (widget.isRegistration) {
+                                Get.to(() => const HomePage());
+                              }
                             } else {
                               Get.snackbar("Alert", "profile create failed");
                             }
@@ -226,7 +235,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                           });
                         }
                       },
-                      child: const Text('Create Profile'),
+                      child: Text(widget.isRegistration ? 'Save' : 'Update'),
                     ),
                   ),
                   const SizedBox(height: 20),

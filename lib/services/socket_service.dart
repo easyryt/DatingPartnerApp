@@ -3,6 +3,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart' as webrtc;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:gad_fly_partner/constant/api_end_point.dart';
 import 'package:gad_fly_partner/controller/main_application_controller.dart';
+import 'package:gad_fly_partner/controller/profile_controller.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
@@ -10,8 +11,10 @@ class ChatService {
   late IO.Socket socket;
   RTCPeerConnection? peerConnection;
   MediaStream? localStream;
+  MediaStreamTrack? localAudioTrack;
   Function(MediaStream)? onRemoteStream;
   MainApplicationController mainApplicationController = Get.find();
+  ProfileController profileController = Get.find();
 
   final Map<String, dynamic> configuration = {
     "iceServers": [
@@ -111,6 +114,16 @@ class ChatService {
       );
     });
 
+    socket.on('wallet-update', (data) async {
+      if (kDebugMode) {
+        print(data);
+      }
+      if (data.containsKey("walletAmount")) {
+        profileController.amount.value =
+            double.parse("${data["walletAmount"]}");
+      }
+    });
+
     socket.on('call-ended', (_) {
       print('Call ended');
       endCalls();
@@ -137,35 +150,57 @@ class ChatService {
     socket.emit('accept-call', {'callId': callId});
   }
 
-  Future<void> setupWebRTC() async {
-    peerConnection = await createPeerConnection(configuration);
+  bool _isLoudspeakerOn = false;
+  Future<void> toggleLoudspeaker(bool isLoudspeakerOn) async {
     try {
+      await webrtc.Helper.setSpeakerphoneOn(isLoudspeakerOn);
+      _isLoudspeakerOn = isLoudspeakerOn;
+      print('Loudspeaker is ${isLoudspeakerOn ? 'ON' : 'OFF'}');
+    } catch (e) {
+      print('Error toggling loudspeaker: $e');
+    }
+  }
+
+  void toggleMicrophone(bool isMuted) {
+    if (localAudioTrack != null) {
+      localAudioTrack!.enabled = !isMuted;
+    }
+  }
+
+  Future<void> setupWebRTC() async {
+    // peerConnection = await createPeerConnection(configuration);
+    try {
+      await endCalls();
       localStream = await webrtc.navigator.mediaDevices.getUserMedia({
         'audio': true,
         'video': false,
       });
 
+      localAudioTrack = localStream!.getAudioTracks().first;
+
+      peerConnection = await createPeerConnection(configuration);
+
       localStream?.getTracks().forEach((track) {
-        print("Remote track: ${track.id}, enabled: ${track.enabled}");
+        //print("Remote track: ${track.id}, enabled: ${track.enabled}");
         peerConnection?.addTrack(track, localStream!);
       });
+
+      peerConnection?.onTrack = (event) {
+        if (event.track.kind == 'audio' && event.streams.isNotEmpty) {
+          onRemoteStream?.call(event.streams.first);
+        }
+      };
+
+      peerConnection?.onIceCandidate = (candidate) {
+        socket.emit('ice-candidate', {
+          'callId': mainApplicationController.currentCallId.value,
+          'candidate': candidate.toMap()
+        });
+      };
     } catch (e) {
       print("Error getting user media: $e");
       return;
     }
-
-    peerConnection?.onIceCandidate = (candidate) {
-      socket.emit('ice-candidate', {
-        'callId': mainApplicationController.currentCallId.value,
-        'candidate': candidate.toMap()
-      });
-    };
-
-    peerConnection?.onTrack = (event) {
-      if (event.track.kind == 'audio' && event.streams.isNotEmpty) {
-        onRemoteStream?.call(event.streams[0]);
-      }
-    };
   }
 
   Future<void> initPeerConnection() async {
@@ -221,17 +256,18 @@ class ChatService {
     }
   }
 
-  void endCall() {
+  endCall() {
     socket.emit(
         'end-call', {'callId': mainApplicationController.currentCallId.value});
     endCalls();
   }
 
-  void endCalls() {
+  endCalls() {
     peerConnection?.close();
     localStream?.dispose();
     peerConnection = null;
     localStream = null;
+    localAudioTrack = null;
   }
 
   disconnect() {
