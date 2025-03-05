@@ -15,6 +15,7 @@ class ProfileController extends GetxController {
   var emailS = "".obs;
   var phoneNumberS = "".obs;
   var isAvailable = false.obs;
+  var language = [].obs;
   final name = TextEditingController();
   final email = TextEditingController();
   final phoneNumber = TextEditingController();
@@ -31,18 +32,20 @@ class ProfileController extends GetxController {
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
-      // if (responseData is Map<String, dynamic>) {
-      //   nameS.value = responseData["data"]["name"];
-      //   name.text = responseData["data"]["name"];
-      //   emailS.value = responseData["data"]["email"];
-      //   email.text = responseData["data"]["email"];
-      //   phoneNumberS.value = responseData["data"]["phone"] ?? "";
-      //   phoneNumber.text = responseData["data"]["phone"] ?? "";
-      //   return responseData;
-      // } else {
-      //   print("Error: Invalid response format");
-      //   return null;
-      // }
+      if (responseData is Map<String, dynamic> &&
+          responseData["additionalInfo"] != "not provided personal Info yet") {
+        nameS.value = responseData["additionalInfo"]["ogName"];
+        name.text = responseData["additionalInfo"]["ogName"];
+        emailS.value = responseData["additionalInfo"]["email"];
+        email.text = responseData["additionalInfo"]["email"];
+        phoneNumberS.value = responseData["data"]["phone"] ?? "";
+        phoneNumber.text = responseData["data"]["phone"] ?? "";
+        language.value = responseData["additionalInfo"]["languages"];
+        return responseData;
+      } else {
+        print("Error: Invalid response format");
+        return null;
+      }
       return responseData;
     } else {
       return null;

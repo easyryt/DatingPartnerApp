@@ -1,10 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:gad_fly_partner/controller/profile_controller.dart';
+import 'package:gad_fly_partner/screens/home/profile/profile_create_screen.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 
 class MyProfileScreen extends StatefulWidget {
   const MyProfileScreen({super.key});
@@ -15,7 +13,7 @@ class MyProfileScreen extends StatefulWidget {
 
 class _MyProfileScreenState extends State<MyProfileScreen> {
   final ProfileController _updateProfileController = Get.find();
-  File? _selectedImage;
+
   bool isLoading = false;
 
   initFunction() async {}
@@ -27,41 +25,28 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     _updateProfileController.getProfile().then((profileData) {
       if (profileData != null) {
         final data = profileData["data"];
-        if (mounted) {
-          setState(() {
-            _updateProfileController.name.text = data["name"] ?? "";
-            _updateProfileController.phoneNumber.text = data["phone"] ?? "";
-            _updateProfileController.email.text = data["email"] ?? "";
-            final gender = data["gender"] ?? "";
-            _updateProfileController.gender.value = (gender == "male")
-                ? 0
-                : (gender == "female")
-                    ? 1
-                    : 2;
-            final intersted = data["intersted"] ?? "";
-            _updateProfileController.intersted.value = (intersted == "male")
-                ? 0
-                : (intersted == "female")
-                    ? 1
-                    : 2;
-          });
-        }
+
+        _updateProfileController.name.text = data["name"] ?? "";
+        _updateProfileController.phoneNumber.text = data["phone"] ?? "";
+        _updateProfileController.email.text = data["email"] ?? "";
+        final gender = data["gender"] ?? "";
+        _updateProfileController.gender.value = (gender == "male")
+            ? 0
+            : (gender == "female")
+                ? 1
+                : 2;
+        final intersted = data["intersted"] ?? "";
+        _updateProfileController.intersted.value = (intersted == "male")
+            ? 0
+            : (intersted == "female")
+                ? 1
+                : 2;
       } else {
         Get.snackbar("Error", "Something went wrong ...Profile not found. ");
       }
     }).catchError((error) {
       Get.snackbar("Error", "An error occurred while fetching profile data.");
     });
-  }
-
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-    }
   }
 
   @override
@@ -119,6 +104,17 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                         ),
                       ],
                     ),
+                    IconButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const ProfileCreateScreen(
+                                      isRegistration: false,
+                                    )),
+                          );
+                        },
+                        icon: Icon(Icons.edit)),
                   ],
                 ),
               ),
@@ -127,488 +123,144 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Obx(() {
-                            return Center(
-                              child: CircleAvatar(
-                                  radius: 32,
-                                  backgroundColor: Colors.grey[400],
-                                  child: _selectedImage != null
-                                      ? Container(
-                                          height: 58,
-                                          width: 58,
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(30),
-                                            image: DecorationImage(
-                                                image:
-                                                    FileImage(_selectedImage!),
-                                                fit: BoxFit.cover),
-                                          ),
-                                        )
-                                      : _updateProfileController.imgUrl.value !=
-                                              ""
-                                          ? Container(
-                                              height: 58,
-                                              width: 58,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(30),
-                                                image: DecorationImage(
-                                                    image: NetworkImage(
-                                                        _updateProfileController
-                                                            .imgUrl.value),
-                                                    fit: BoxFit.cover),
-                                              ),
-                                            )
-                                          : CircleAvatar(
-                                              radius: 26,
-                                              backgroundColor: appColor,
-                                            )),
-                            );
-                          }),
-                          const SizedBox(
-                            height: 6,
-                          ),
-                          Center(
-                            child: InkWell(
-                              onTap: () async {
-                                await _pickImage();
-                              },
-                              child: Text(
-                                "Edit Picture",
-                                style: GoogleFonts.roboto(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 15,
-                                  color: appColor,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            height: 50,
-                            child: TextFormField(
-                              controller: _updateProfileController.name,
-                              cursorColor: blackColor,
-                              style: TextStyle(color: blackColor),
-                              decoration: InputDecoration(
-                                labelText: "Name",
-                                labelStyle:
-                                    GoogleFonts.roboto(color: blackColor),
-                                floatingLabelStyle:
-                                    GoogleFonts.roboto(color: blackColor),
-                                enabledBorder: OutlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(5)),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: blackColor),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            height: 50,
-                            child: TextFormField(
-                              controller: _updateProfileController.email,
-                              cursorColor: blackColor,
-                              style: TextStyle(color: blackColor),
-                              decoration: InputDecoration(
-                                labelText: "Email ID",
-                                labelStyle:
-                                    GoogleFonts.roboto(color: blackColor),
-                                floatingLabelStyle:
-                                    GoogleFonts.roboto(color: blackColor),
-                                enabledBorder: OutlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(5)),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: blackColor),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            height: 50,
-                            child: TextFormField(
-                              controller: _updateProfileController.phoneNumber,
-                              cursorColor: blackColor,
-                              style: TextStyle(color: blackColor),
-                              decoration: InputDecoration(
-                                labelText: "Phone Number",
-                                labelStyle:
-                                    GoogleFonts.roboto(color: blackColor),
-                                floatingLabelStyle:
-                                    GoogleFonts.roboto(color: blackColor),
-                                enabledBorder: OutlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(5)),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: blackColor),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            "Gender",
-                            style: GoogleFonts.roboto(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Obx(() {
-                                  return InkWell(
-                                    onTap: () {
-                                      _updateProfileController.gender.value = 0;
-                                    },
-                                    overlayColor: MaterialStateProperty.all(
-                                        Colors.transparent),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          height: 15,
-                                          width: 15,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: appColor),
-                                          ),
-                                          child: _updateProfileController
-                                                      .gender.value ==
-                                                  0
-                                              ? Center(
-                                                  child: Container(
-                                                    height: 10,
-                                                    width: 10,
-                                                    decoration: BoxDecoration(
-                                                      color: appColor,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox(),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          "Male",
-                                          style: GoogleFonts.roboto(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      ],
+                    child: Obx(() {
+                      return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                    radius: 28,
+                                    backgroundColor: Colors.grey[300],
+                                    child:
+                                        _updateProfileController.imgUrl.value !=
+                                                ""
+                                            ? Container(
+                                                height: 56,
+                                                width: 56,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(30),
+                                                  image: DecorationImage(
+                                                      image: NetworkImage(
+                                                          _updateProfileController
+                                                              .imgUrl.value),
+                                                      fit: BoxFit.cover),
+                                                ),
+                                              )
+                                            : CircleAvatar(
+                                                radius: 26,
+                                                backgroundColor: appColor,
+                                              )),
+                                const SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _updateProfileController.nameS.value,
+                                      style: TextStyle(
+                                          color: blackColor,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500),
                                     ),
-                                  );
-                                }),
-                              ),
-                              Expanded(
-                                child: Obx(() {
-                                  return InkWell(
-                                    onTap: () {
-                                      _updateProfileController.gender.value = 1;
-                                    },
-                                    overlayColor: MaterialStateProperty.all(
-                                        Colors.transparent),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          height: 15,
-                                          width: 15,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: appColor),
-                                          ),
-                                          child: _updateProfileController
-                                                      .gender.value ==
-                                                  1
-                                              ? Center(
-                                                  child: Container(
-                                                    height: 10,
-                                                    width: 10,
-                                                    decoration: BoxDecoration(
-                                                      color: appColor,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox(),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          "Female",
-                                          style: GoogleFonts.roboto(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      ],
+                                    Text(
+                                      _updateProfileController
+                                          .phoneNumberS.value,
+                                      style: TextStyle(
+                                          color: Colors.grey.withOpacity(0.5),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400),
                                     ),
-                                  );
-                                }),
-                              ),
-                              Expanded(
-                                child: Obx(() {
-                                  return InkWell(
-                                    overlayColor: MaterialStateProperty.all(
-                                        Colors.transparent),
-                                    onTap: () {
-                                      _updateProfileController.gender.value = 2;
-                                    },
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          height: 15,
-                                          width: 15,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: appColor),
-                                          ),
-                                          child: _updateProfileController
-                                                      .gender.value ==
-                                                  2
-                                              ? Center(
-                                                  child: Container(
-                                                    height: 10,
-                                                    width: 10,
-                                                    decoration: BoxDecoration(
-                                                      color: appColor,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox(),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          "Other",
-                                          style: GoogleFonts.roboto(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            "Intersted In",
-                            style: GoogleFonts.roboto(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
+                                  ],
+                                )
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Obx(() {
-                                  return InkWell(
-                                    onTap: () {
-                                      _updateProfileController.intersted.value =
-                                          0;
-                                    },
-                                    overlayColor: MaterialStateProperty.all(
-                                        Colors.transparent),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          height: 15,
-                                          width: 15,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: appColor),
-                                          ),
-                                          child: _updateProfileController
-                                                      .intersted.value ==
-                                                  0
-                                              ? Center(
-                                                  child: Container(
-                                                    height: 10,
-                                                    width: 10,
-                                                    decoration: BoxDecoration(
-                                                      color: appColor,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox(),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          "Male",
-                                          style: GoogleFonts.roboto(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ),
-                              Expanded(
-                                child: Obx(() {
-                                  return InkWell(
-                                    onTap: () {
-                                      _updateProfileController.intersted.value =
-                                          1;
-                                    },
-                                    overlayColor: MaterialStateProperty.all(
-                                        Colors.transparent),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          height: 15,
-                                          width: 15,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: appColor),
-                                          ),
-                                          child: _updateProfileController
-                                                      .intersted.value ==
-                                                  1
-                                              ? Center(
-                                                  child: Container(
-                                                    height: 10,
-                                                    width: 10,
-                                                    decoration: BoxDecoration(
-                                                      color: appColor,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox(),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          "Female",
-                                          style: GoogleFonts.roboto(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ),
-                              Expanded(
-                                child: Obx(() {
-                                  return InkWell(
-                                    overlayColor: MaterialStateProperty.all(
-                                        Colors.transparent),
-                                    onTap: () {
-                                      _updateProfileController.intersted.value =
-                                          2;
-                                    },
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          height: 15,
-                                          width: 15,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: appColor),
-                                          ),
-                                          child: _updateProfileController
-                                                      .intersted.value ==
-                                                  2
-                                              ? Center(
-                                                  child: Container(
-                                                    height: 10,
-                                                    width: 10,
-                                                    decoration: BoxDecoration(
-                                                      color: appColor,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox(),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          "Other",
-                                          style: GoogleFonts.roboto(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () async {
-                              // setState(() {
-                              //   isLoading = true;
-                              // });
-                              // await _updateProfileController
-                              //     .updateProfile()
-                              //     .then((onValue) {
-                              //   if (onValue == true) {
-                              //     Get.snackbar(
-                              //         "wow", "Profile updated successfully",
-                              //         snackPosition: SnackPosition.TOP,
-                              //         backgroundColor: Colors.grey.shade300);
-                              //     // print("Profile updated successfully");
-                              //   } else {
-                              //     Get.snackbar(
-                              //         "Alert", "Profile updated Failed",
-                              //         snackPosition: SnackPosition.TOP,
-                              //         backgroundColor: Colors.grey.shade300);
-                              //   }
-                              // });
-                              // setState(() {
-                              //   isLoading = false;
-                              // });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 9, horizontal: 12),
-                              margin: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 6),
-                              width: width * 0.88,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                color: greyMedium1Color,
-                              ),
-                              child: Center(
-                                child: Text("Update & Save",
-                                    style: TextStyle(
-                                        color: blackColor,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500)),
-                              ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "Professional Listener",
+                              style: TextStyle(
+                                  color: Colors.grey.withOpacity(0.5),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400),
                             ),
-                          ),
-                        ]),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Namaste! I’m ${_updateProfileController.nameS.value}. When I’m not Whipping up delicious treats in the kitchen.",
+                              style: const TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400),
+                            ),
+                            const SizedBox(height: 12),
+
+                            const Text(
+                              "Expertise",
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildChips([
+                              'Empathy',
+                              'Compassion',
+                              'Problem-Solving',
+                              'Loneliness'
+                            ], greyMedium1Color),
+                            const SizedBox(height: 8),
+                            const Text('Language',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            _buildChips(_updateProfileController.language,
+                                greyMedium1Color),
+                            const Spacer(),
+                            // GestureDetector(
+                            //   onTap: () async {
+                            //     // setState(() {
+                            //     //   isLoading = true;
+                            //     // });
+                            //     // await _updateProfileController
+                            //     //     .updateProfile()
+                            //     //     .then((onValue) {
+                            //     //   if (onValue == true) {
+                            //     //     Get.snackbar(
+                            //     //         "wow", "Profile updated successfully",
+                            //     //         snackPosition: SnackPosition.TOP,
+                            //     //         backgroundColor: Colors.grey.shade300);
+                            //     //     // print("Profile updated successfully");
+                            //     //   } else {
+                            //     //     Get.snackbar(
+                            //     //         "Alert", "Profile updated Failed",
+                            //     //         snackPosition: SnackPosition.TOP,
+                            //     //         backgroundColor: Colors.grey.shade300);
+                            //     //   }
+                            //     // });
+                            //     // setState(() {
+                            //     //   isLoading = false;
+                            //     // });
+                            //   },
+                            //   child: Container(
+                            //     padding: const EdgeInsets.symmetric(
+                            //         vertical: 9, horizontal: 12),
+                            //     margin: const EdgeInsets.symmetric(
+                            //         vertical: 8, horizontal: 6),
+                            //     width: width * 0.88,
+                            //     decoration: BoxDecoration(
+                            //       borderRadius: BorderRadius.circular(8),
+                            //       color: greyMedium1Color,
+                            //     ),
+                            //     child: Center(
+                            //       child: Text("Update & Save",
+                            //           style: TextStyle(
+                            //               color: blackColor,
+                            //               fontSize: 16,
+                            //               fontWeight: FontWeight.w500)),
+                            //     ),
+                            //   ),
+                            // ),
+                          ]);
+                    }),
                   ),
                   if (isLoading)
                     Positioned(
@@ -627,6 +279,19 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildChips(List labels, greyMedium1Color) {
+    return Wrap(
+      spacing: 10.0,
+      children: labels
+          .map((label) => Chip(
+              // surfaceTintColor: greyMedium1Color.,
+              // backgroundColor: greyMedium1Color,
+              side: BorderSide.none,
+              label: Text(label)))
+          .toList(),
     );
   }
 }

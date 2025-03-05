@@ -6,8 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:gad_fly_partner/controller/main_application_controller.dart';
 import 'package:gad_fly_partner/controller/profile_controller.dart';
+import 'package:gad_fly_partner/screens/home/history.dart';
+import 'package:gad_fly_partner/screens/home/profile/my_profile.dart';
 import 'package:gad_fly_partner/screens/home/profile/profile.dart';
-import 'package:gad_fly_partner/screens/home/profile/profile_create_screen.dart';
 import 'package:gad_fly_partner/services/socket_service.dart';
 import 'package:get/get.dart';
 
@@ -120,6 +121,7 @@ class _HomePageState extends State<HomePage> {
             double.parse("${onValue["data"]["walletAmount"]}");
       }
     });
+    mainApplicationController.getAllTransaction();
     initFunction();
 
     chatService.socket.on('incoming-call', (data) async {
@@ -148,6 +150,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         isCalling = false;
         isCallConnected = false;
+        remoteStream = null;
       });
       chatService.endCalls();
       _stopRingingSound();
@@ -166,8 +169,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _stopTimer();
+    _audioPlayer.stop();
+    _audioPlayer.dispose();
+    remoteStream?.dispose();
     chatService.disconnect();
+    _stopTimer();
     super.dispose();
   }
 
@@ -178,8 +184,6 @@ class _HomePageState extends State<HomePage> {
     var whiteColor = Colors.white;
     var blackColor = Colors.black;
     var appColor = const Color(0xFF8CA6DB);
-    var appYellow = const Color(0xFFFFE30F);
-    var appGreenColor = const Color(0xFF35D673);
     var greyMedium1Color = const Color(0xFFDBDBDB);
     return WillPopScope(
       onWillPop: () async {
@@ -222,6 +226,12 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           actions: [
+            if (!isCalling)
+              IconButton(
+                  onPressed: () {
+                    Get.to(() => HistoryScreen());
+                  },
+                  icon: const Icon(Icons.history)),
             if (!isCalling)
               Obx(() {
                 return DropdownButton<String>(
@@ -322,7 +332,7 @@ class _HomePageState extends State<HomePage> {
                     style: const TextStyle(fontSize: 18),
                   ),
                   const SizedBox(height: 20),
-                  Spacer(),
+                  const Spacer(),
                   if (isCallConnected)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -698,14 +708,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             InkWell(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const ProfileCreateScreen(
-                                            isRegistration: false,
-                                          )),
-                                );
+                                Get.to(() => const MyProfileScreen());
                               },
                               child: Container(
                                 padding: EdgeInsets.symmetric(
