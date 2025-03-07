@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 class ProfileController extends GetxController {
-  var gender = 0.obs;
+  var gender = 1.obs;
   var intersted = 0.obs;
   var amount = 0.0.obs;
   var imgUrl = "".obs;

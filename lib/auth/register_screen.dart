@@ -4,8 +4,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:gad_fly_partner/controller/auth_register_controller.dart';
 import 'package:gad_fly_partner/controller/main_application_controller.dart';
-import 'package:gad_fly_partner/screens/home/home_page.dart';
-import 'package:gad_fly_partner/screens/home/profile/profile_create_screen.dart';
+import 'package:gad_fly_partner/screens/bottom_navigation.dart';
+import 'package:gad_fly_partner/screens/your_profile_create.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pinput/pinput.dart';
@@ -74,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     Size size = MediaQuery.of(context).size;
     var appColor = const Color(0xFF8CA6DB);
     return isLoggedIn
-        ? const HomePage()
+        ? const MainHomeScreen()
         : Scaffold(
             backgroundColor: Colors.white,
             resizeToAvoidBottomInset: true,
@@ -332,9 +332,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         // Global.storageServices
                                         //     .setString("x-auth-token", token);
                                         // Global.apiClient.updateHeader(token);
-                                        Get.to(() => const ProfileCreateScreen(
-                                              isRegistration: true,
-                                            ));
+                                        Get.to(() => const YourProfileCreate()
+                                            // const ProfileCreateScreen(
+                                            //       isRegistration: true,
+                                            //     )
+                                            );
                                       } else {
                                         Get.snackbar(
                                             "error", "Please input a valid otp",
@@ -486,9 +488,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               authController.sentOtp.value =
                                                   false;
                                               Get.to(() =>
-                                                  const ProfileCreateScreen(
-                                                    isRegistration: true,
-                                                  ));
+                                                      const YourProfileCreate()
+                                                  // const ProfileCreateScreen(
+                                                  //   isRegistration: true,
+                                                  // )
+                                                  );
                                             }
                                           } else {
                                             Get.snackbar(

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:gad_fly_partner/controller/main_application_controller.dart';
 import 'package:gad_fly_partner/controller/profile_controller.dart';
-import 'package:gad_fly_partner/screens/home/home_page.dart';
+import 'package:gad_fly_partner/screens/bottom_navigation.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -54,7 +54,13 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               profileData["additionalInfo"]["avatarName"];
           _ageController.text = profileData["additionalInfo"]["age"].toString();
           _gender = profileData["additionalInfo"]["gender"] ?? "";
-
+          if (_gender == "female") {
+            profileController.gender.value = 1;
+          } else if (_gender == "male") {
+            profileController.gender.value = 0;
+          } else {
+            profileController.gender.value = 2;
+          }
           // _languagesController.text =
           //     profileData["additionalInfo"]["languages"][0];
           // _languagesController1.text =
@@ -765,7 +771,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                               Get.snackbar(
                                   "wow", "profile create successfully");
                               if (widget.isRegistration) {
-                                Get.to(() => const HomePage());
+                                Get.to(() => const MainHomeScreen());
                               }
                             } else {
                               Get.snackbar("Alert", "profile create failed");

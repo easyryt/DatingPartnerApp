@@ -69,6 +69,18 @@ class ChatService {
       }
     });
 
+    socket.on('new-message', (data) {
+      print(data);
+    });
+
+    socket.on('typing-start', (data) {
+      print(data);
+    });
+
+    socket.on('typing-stop', (data) {
+      print(data);
+    });
+
     socket.on("toggleResponse", (data) async {
       print(data);
     });
