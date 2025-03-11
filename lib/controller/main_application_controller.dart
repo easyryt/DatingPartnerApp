@@ -20,6 +20,7 @@ class MainApplicationController extends GetxController {
   var voiceId = ''.obs;
   var voiceUrl = ''.obs;
   AllChatModel? allChatModel;
+  var chatList = [].obs;
 
   List<Widget> homeWidgets = [
     const HomePage(),
@@ -79,6 +80,26 @@ class MainApplicationController extends GetxController {
       final responseData = json.decode(response.body);
       print(responseData);
       return false;
+    }
+  }
+
+  Future getMessages(conversationId) async {
+    final response = await http.get(
+      Uri.parse(
+          '${ApiEndpoints.baseUrl}/partner/chatHistory/messageHistory/$conversationId'),
+      headers: {
+        'x-partner-token': authToken.value,
+      },
+    );
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+
+      // allChatModel = AllChatModel.fromJson(responseData);
+      return responseData;
+    } else {
+      final responseData = json.decode(response.body);
+      print(responseData);
+      return null;
     }
   }
 
@@ -146,12 +167,15 @@ class MainApplicationController extends GetxController {
         return responseData;
       } else {
         final responseData = json.decode(response.body);
+        // if(responseData)
+        Get.snackbar("Alert", responseData["message"]);
         return null;
       }
     } catch (error) {
       if (kDebugMode) {
         print('Error occurred: $error');
       }
+      Get.snackbar("Alert", "Something went wrong or Network Problem.");
       return null;
     }
   }

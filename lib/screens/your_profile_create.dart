@@ -60,7 +60,10 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
         profileController.isAvailable.value = onValue["data"]["isAvailable"];
         profileController.amount.value =
             double.parse("${onValue["data"]["walletAmount"]}");
-        Get.to(() => const MainHomeScreen());
+        if (onValue["additionalInfo"]["avatarName"] != null &&
+            onValue["additionalInfo"]["gender"] != null) {
+          Get.to(() => const MainHomeScreen());
+        }
       }
     });
     super.initState();
@@ -80,7 +83,7 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
 
     return Scaffold(
       backgroundColor: white,
-      resizeToAvoidBottomInset: false,
+      // resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Stack(
           children: [
@@ -691,8 +694,9 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
                       if (int.tryParse(value) == null) {
                         return 'Please enter a valid number';
                       }
-                      if (int.tryParse(dobController.text)! < 18) {
-                        return 'Age is Required Above 18';
+                      if (int.tryParse(dobController.text)! < 18 ||
+                          int.tryParse(dobController.text)! > 99) {
+                        return 'Age is Required Between 18 To 99';
                       }
                       return null;
                     },
@@ -731,7 +735,7 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
                           filled: true,
                           suffixIcon: IconButton(
                             icon: const Icon(Icons.add),
-                            onPressed: () {
+                            onPressed: () async {
                               if (languagesController.text.isNotEmpty) {
                                 setState(() {
                                   _languages.add(languagesController.text);
@@ -983,10 +987,16 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
                         icon: const Icon(Icons.add),
                         onPressed: () {
                           if (expertController.text.isNotEmpty) {
-                            setState(() {
-                              _expertise.add(languagesController.text);
-                              expertController.clear();
-                            });
+                            if (_expertise.length < 4) {
+                              setState(() {
+                                _expertise.add(expertController.text);
+                                expertController.clear();
+                              });
+                            } else {
+                              Get.snackbar("Alert",
+                                  "Expertise/Query is Not more then 4.",
+                                  snackPosition: SnackPosition.TOP);
+                            }
                           }
                         },
                       ),
@@ -1003,10 +1013,16 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
                     ),
                     onFieldSubmitted: (value) {
                       if (value.isNotEmpty) {
-                        setState(() {
-                          _expertise.add(value);
-                          expertController.clear();
-                        });
+                        if (_expertise.length < 4) {
+                          setState(() {
+                            _expertise.add(value);
+                            expertController.clear();
+                          });
+                        } else {
+                          Get.snackbar(
+                              "Alert", "Expertise/Query is Not more then 4.",
+                              snackPosition: SnackPosition.TOP);
+                        }
                       }
                     },
                   ),
@@ -1089,80 +1105,13 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        // String? recordedPath;
-        // bool isRecording = false;
+        bool isDialogLoading = false;
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            // return AlertDialog(
-            //   title: Text(isRecording ? 'Recording...' : 'Record Voice'),
-            //   content: Column(
-            //     mainAxisSize: MainAxisSize.min,
-            //     children: [
-            //       if (isRecording)
-            //         const CircularProgressIndicator()
-            //       else
-            //         const Text('Tap to start recording.'),
-            //       const SizedBox(height: 16),
-            //       ElevatedButton(
-            //         onPressed: () async {
-            //           if (isRecording) {
-            //             // Stop recording
-            //             String? path = await audioRecorder.stop();
-            //             if (path != null) {
-            //               setState(() {
-            //                 isRecording = false;
-            //                 recordedVoicePath = path;
-            //               });
-            //             }
-            //           } else {
-            //             // Start recording
-            //             if (await audioRecorder.hasPermission()) {
-            //               Directory tempDir =
-            //                   await getApplicationDocumentsDirectory();
-            //               // String filePath =
-            //               //     '${tempDir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-            //               final String filePath =
-            //                   p.join(tempDir.path, "recording.wav");
-            //               print(filePath);
-            //               await audioRecorder.start(const RecordConfig(),
-            //                   path: filePath);
-            //               setState(() {
-            //                 isRecording = true;
-            //                 recordedVoicePath = null;
-            //               });
-            //             }
-            //           }
-            //         },
-            //         child: Text(isRecording ? 'Stop' : 'Record'),
-            //       ),
-            //     ],
-            //   ),
-            //   actions: [
-            //     if (recordedVoicePath != null)
-            //       TextButton(
-            //         onPressed: () async {
-            //           await mainApplicationController
-            //               .voiceRecordUpload(recordedVoicePath);
-            //           setState(() {
-            //             // recordedVoicePath = recordedPath;
-            //             voiceController.text = 'Recorded';
-            //           });
-            //           Navigator.of(context).pop();
-            //         },
-            //         child: const Text('Done'),
-            //       ),
-            //     TextButton(
-            //       onPressed: () {
-            //         Navigator.of(context).pop();
-            //       },
-            //       child: const Text('Cancel'),
-            //     ),
-            //   ],
-            // );
             return AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
-              contentPadding: EdgeInsets.all(20),
+              contentPadding: const EdgeInsets.all(20),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1209,47 +1158,50 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
                         },
                       ),
                       const SizedBox(width: 8),
-                      FloatingActionButton(
-                        backgroundColor: Colors.pink,
-                        onPressed: () async {
-                          //  isRecording ? _stopRecording : _startRecording;
-                          if (!isRecording) {
-                            if (await audioRecorder.hasPermission()) {
-                              Directory tempDir =
-                                  await getApplicationDocumentsDirectory();
-                              String filePath =
-                                  p.join(tempDir.path, "recording.wav");
+                      isDialogLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : FloatingActionButton(
+                              backgroundColor: Colors.pink,
+                              onPressed: () async {
+                                //  isRecording ? _stopRecording : _startRecording;
+                                if (!isRecording) {
+                                  if (await audioRecorder.hasPermission()) {
+                                    Directory tempDir =
+                                        await getApplicationDocumentsDirectory();
+                                    String filePath =
+                                        p.join(tempDir.path, "recording.mp3");
 
-                              await audioRecorder.start(const RecordConfig(),
-                                  path: filePath);
+                                    await audioRecorder.start(
+                                        const RecordConfig(),
+                                        path: filePath);
 
-                              setState(() {
-                                isRecording = true;
-                                recordedVoicePath = null;
-                                _seconds = 0;
-                              });
+                                    setState(() {
+                                      isRecording = true;
+                                      recordedVoicePath = null;
+                                      _seconds = 0;
+                                    });
 
-                              _timer = Timer.periodic(
-                                  const Duration(seconds: 1), (timer) {
-                                setState(() {
-                                  _seconds++;
-                                });
-                              });
-                            }
-                          } else {
-                            String? path = await audioRecorder.stop();
-                            if (path != null) {
-                              setState(() {
-                                isRecording = false;
-                                recordedVoicePath = path;
-                              });
-                              _timer?.cancel();
-                            }
-                          }
-                        },
-                        child: Icon(isRecording ? Icons.stop : Icons.mic,
-                            color: Colors.white),
-                      ),
+                                    _timer = Timer.periodic(
+                                        const Duration(seconds: 1), (timer) {
+                                      setState(() {
+                                        _seconds++;
+                                      });
+                                    });
+                                  }
+                                } else {
+                                  String? path = await audioRecorder.stop();
+                                  if (path != null) {
+                                    setState(() {
+                                      isRecording = false;
+                                      recordedVoicePath = path;
+                                    });
+                                    _timer?.cancel();
+                                  }
+                                }
+                              },
+                              child: Icon(isRecording ? Icons.stop : Icons.mic,
+                                  color: Colors.white),
+                            ),
                       const SizedBox(width: 8),
                       IconButton(
                         icon: Icon(
@@ -1258,16 +1210,39 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
                               ? Colors.blue
                               : Colors.grey,
                         ),
-                        onPressed: recordedVoicePath != null
+                        onPressed: isRecording
                             ? () async {
+                                String? path = await audioRecorder.stop();
+                                if (path != null) {
+                                  setState(() {
+                                    isRecording = false;
+                                    recordedVoicePath = path;
+                                    isDialogLoading = true;
+                                  });
+                                  _timer?.cancel();
+                                }
                                 await mainApplicationController
                                     .voiceRecordUpload(recordedVoicePath);
                                 setState(() {
                                   voiceController.text = 'Recorded';
+                                  isDialogLoading = false;
                                 });
                                 Navigator.pop(context);
                               }
-                            : null,
+                            : recordedVoicePath != null
+                                ? () async {
+                                    setState(() {
+                                      isDialogLoading = true;
+                                    });
+                                    await mainApplicationController
+                                        .voiceRecordUpload(recordedVoicePath);
+                                    setState(() {
+                                      voiceController.text = 'Recorded';
+                                      isDialogLoading = false;
+                                    });
+                                    Navigator.pop(context);
+                                  }
+                                : null,
                       ),
                     ],
                   ),

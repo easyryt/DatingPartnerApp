@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:gad_fly_partner/constant/color_code.dart';
 import 'package:gad_fly_partner/controller/main_application_controller.dart';
 import 'package:gad_fly_partner/screens/messages_screen.dart';
+import 'package:gad_fly_partner/services/socket_service.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -16,9 +17,40 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   MainApplicationController mainApplicationController = Get.find();
 
+  ChatService chatService = ChatService();
+
+  initFunction() async {
+    if (mainApplicationController.authToken.value != "") {
+      await chatService.connect(
+        _onRequestAccepted,
+        (_) {},
+      );
+      await chatService.fetchChatList();
+    }
+  }
+
+  void _onRequestAccepted(Map<String, dynamic> data) async {
+    // mainApplicationController.partnerList.clear();
+    // if (data.containsKey('data')) {
+    //   final List<dynamic> noteData = data['data'];
+    //   List<Map<String, dynamic>> dataList =
+    //       noteData.map((data) => data as Map<String, dynamic>).toList();
+    //   mainApplicationController.partnerList.value = dataList;
+    // } else {
+    //   throw Exception('Invalid response format: "data" field not found');
+    // }
+  }
+
   @override
   void initState() {
-    mainApplicationController.getAllChat();
+    initFunction();
+    // mainApplicationController.getAllChat();
+
+    chatService.socket.on('chat-list', (data) {
+      //  print(data);
+      mainApplicationController.chatList.value = data["data"];
+    });
+
     super.initState();
   }
 
@@ -68,116 +100,106 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
             ),
-            mainApplicationController.allChatModel != null
-                ?
-                // Obx(() {
-                //         return
-                Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                    child: ListView.builder(
-                        shrinkWrap: true,
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: mainApplicationController
-                            .allChatModel!.data!.length,
-                        itemBuilder: (context, index) {
-                          var item = mainApplicationController
-                              .allChatModel!.data![index];
-                          return GestureDetector(
-                            onTap: () {
-                              Get.to(() => MessagesScreen(
-                                    receiverId:
-                                        item.lastMessage!.conversationId!,
-                                  ));
-                            },
-                            child: Container(
-                              width: width,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 8),
-                              margin: const EdgeInsets.symmetric(
-                                  horizontal: 4, vertical: 5),
-                              decoration: BoxDecoration(
-                                  color: white,
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Colors.grey.shade300,
-                                        spreadRadius: 0,
-                                        blurRadius: 0,
-                                        offset: const Offset(0, 0))
-                                  ]),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 28,
-                                    backgroundColor: greyMedium1Color,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item.partner!.avatarName!,
-                                              style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w600),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              item.lastMessage!.content!,
-                                              style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w400),
-                                            ),
-                                          ],
-                                        ),
-                                        Column(
-                                          children: [
-                                            const SizedBox(height: 12),
-                                            Text(
-                                              formatDate(
-                                                  item.lastMessage!.createdAt!),
-                                              style: const TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            if (item.unreadCount != 0)
-                                              CircleAvatar(
-                                                  radius: 11,
-                                                  backgroundColor: appColorP
-                                                      .withOpacity(0.8),
-                                                  child: Center(
-                                                      child: Text(
-                                                    (item.unreadCount! > 99)
-                                                        ? "99+"
-                                                        : "${item.unreadCount}",
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                        color: white,
-                                                        fontSize: 10),
-                                                  )))
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ],
+            Obx(() {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: mainApplicationController.chatList.length,
+                    itemBuilder: (context, index) {
+                      var item = mainApplicationController.chatList[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Get.to(() => MessagesScreen(
+                                conversationId: item["lastMessage"]
+                                    ["conversationId"],
+                                receiverId: item["user"]["_id"],
+                                name: item["user"]["avatarName"],
+                              ));
+                        },
+                        child: Container(
+                          width: width,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 8),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 5),
+                          decoration: BoxDecoration(
+                              color: white,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.grey.shade300,
+                                    spreadRadius: 0,
+                                    blurRadius: 0,
+                                    offset: const Offset(0, 0))
+                              ]),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 28,
+                                backgroundColor: greyMedium1Color,
                               ),
-                            ),
-                          );
-                          //   });
-                        }),
-                  )
-                : Center(child: const Text("User Chat Empty")),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item["user"]["avatarName"],
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      item["lastMessage"]["content"],
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    formatDate(
+                                        item["lastMessage"]["createdAt"]),
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (item["unreadCount"] != 0)
+                                    CircleAvatar(
+                                        radius: 11,
+                                        backgroundColor:
+                                            appColor.withOpacity(0.8),
+                                        child: Center(
+                                            child: Text(
+                                          (item["unreadCount"] > 99)
+                                              ? "99+"
+                                              : "${item["unreadCount"]}",
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              color: white, fontSize: 10),
+                                        )))
+                                ],
+                              )
+                            ],
+                          ),
+                        ),
+                      );
+                      //   });
+                    }),
+              );
+            })
           ],
         ));
   }
@@ -193,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
           dateTime.day == now.day) {
         return DateFormat('hh:mm a').format(dateTime);
       } else {
-        return DateFormat('MMM hh:mm a').format(dateTime);
+        return DateFormat('dd-MMM hh:mm a').format(dateTime);
       }
     } catch (e) {
       print('Invalid date format: $e');

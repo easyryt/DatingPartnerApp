@@ -32,12 +32,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> loadJwtToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? authToken = prefs.getString('token');
-    setState(() {
-      isLoggedIn = authToken != null;
-      if (authToken != null) {
+    if (authToken != null) {
+      setState(() {
+        isLoggedIn = true;
         mainApplicationController.authToken.value = authToken;
-      }
-    });
+      });
+    }
     print(authToken);
   }
 
@@ -332,6 +332,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         // Global.storageServices
                                         //     .setString("x-auth-token", token);
                                         // Global.apiClient.updateHeader(token);
+                                        authController.otpTextEditingController
+                                            .clear();
+                                        authController
+                                            .phoneTextEditingController
+                                            .clear();
+                                        authController.sentOtp.value = false;
                                         Get.to(() => const YourProfileCreate()
                                             // const ProfileCreateScreen(
                                             //       isRegistration: true,

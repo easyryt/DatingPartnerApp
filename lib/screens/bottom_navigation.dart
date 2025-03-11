@@ -138,7 +138,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               onTap: (index) {
                 _mainApplicationController.pageIdx.value = index;
               },
-              selectedItemColor: appColorR,
+              selectedItemColor: appColor,
               unselectedItemColor: grey.withOpacity(0.7),
               currentIndex: _mainApplicationController.pageIdx.value,
               items: const [

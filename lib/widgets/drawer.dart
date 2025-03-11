@@ -40,7 +40,7 @@ Drawer buildDrawer(double width, double height) {
             padding: const EdgeInsets.only(top: 36, left: 16, bottom: 24),
             decoration: BoxDecoration(
                 gradient: LinearGradient(
-                    colors: [appColorR, appColorR, appColorP],
+                    colors: [appColor, appColor, appColor.withOpacity(0.2)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight)),
             child: Column(

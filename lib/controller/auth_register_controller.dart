@@ -68,6 +68,7 @@ class AuthRegisterController extends GetxController {
       await saveTokenToSharedPreferences(data["token"]);
       return data["token"];
     } else {
+      final responseData = response.body;
       return "";
     }
   }

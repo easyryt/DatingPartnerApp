@@ -1,44 +1,81 @@
-class AllChatModel {
+class MessagesModel {
   bool? status;
-  List<Data>? data;
+  Data? data;
 
-  AllChatModel({this.status, this.data});
+  MessagesModel({this.status, this.data});
 
-  AllChatModel.fromJson(Map<String, dynamic> json) {
+  MessagesModel.fromJson(Map<String, dynamic> json) {
     status = json['status'];
-    if (json['data'] != null) {
-      data = <Data>[];
-      json['data'].forEach((v) {
-        data!.add(Data.fromJson(v));
-      });
-    }
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['status'] = status;
     if (this.data != null) {
-      data['data'] = this.data!.map((v) => v.toJson()).toList();
+      data['data'] = this.data!.toJson();
     }
     return data;
   }
 }
 
 class Data {
-  String? sId;
-  User? user;
-  LastMessage? lastMessage;
-  int? unreadCount;
+  Conversation? conversation;
+  List<Messages>? messages;
 
-  Data({this.sId, this.user, this.lastMessage, this.unreadCount});
+  Data({this.conversation, this.messages});
 
   Data.fromJson(Map<String, dynamic> json) {
+    conversation = json['conversation'] != null
+        ? Conversation.fromJson(json['conversation'])
+        : null;
+    if (json['messages'] != null) {
+      messages = <Messages>[];
+      json['messages'].forEach((v) {
+        messages!.add(Messages.fromJson(v));
+      });
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (conversation != null) {
+      data['conversation'] = conversation!.toJson();
+    }
+    if (messages != null) {
+      data['messages'] = messages!.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
+
+class Conversation {
+  String? sId;
+  User? user;
+  Partner? partner;
+  String? updatedAt;
+  String? createdAt;
+  int? iV;
+  String? lastMessage;
+
+  Conversation(
+      {this.sId,
+      this.user,
+      this.partner,
+      this.updatedAt,
+      this.createdAt,
+      this.iV,
+      this.lastMessage});
+
+  Conversation.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     user = json['user'] != null ? User.fromJson(json['user']) : null;
-    lastMessage = json['lastMessage'] != null
-        ? LastMessage.fromJson(json['lastMessage'])
-        : null;
-    unreadCount = json['unreadCount'];
+    partner =
+        json['partner'] != null ? Partner.fromJson(json['partner']) : null;
+    updatedAt = json['updatedAt'];
+    createdAt = json['createdAt'];
+    iV = json['__v'];
+    lastMessage = json['lastMessage'];
   }
 
   Map<String, dynamic> toJson() {
@@ -47,10 +84,13 @@ class Data {
     if (user != null) {
       data['user'] = user!.toJson();
     }
-    if (lastMessage != null) {
-      data['lastMessage'] = lastMessage!.toJson();
+    if (partner != null) {
+      data['partner'] = partner!.toJson();
     }
-    data['unreadCount'] = unreadCount;
+    data['updatedAt'] = updatedAt;
+    data['createdAt'] = createdAt;
+    data['__v'] = iV;
+    data['lastMessage'] = lastMessage;
     return data;
   }
 }
@@ -74,7 +114,23 @@ class User {
   }
 }
 
-class LastMessage {
+class Partner {
+  String? sId;
+
+  Partner({this.sId});
+
+  Partner.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['_id'] = sId;
+    return data;
+  }
+}
+
+class Messages {
   String? sId;
   String? conversationId;
   String? senderId;
@@ -86,7 +142,7 @@ class LastMessage {
   String? updatedAt;
   int? iV;
 
-  LastMessage(
+  Messages(
       {this.sId,
       this.conversationId,
       this.senderId,
@@ -98,7 +154,7 @@ class LastMessage {
       this.updatedAt,
       this.iV});
 
-  LastMessage.fromJson(Map<String, dynamic> json) {
+  Messages.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     conversationId = json['conversationId'];
     senderId = json['senderId'];
