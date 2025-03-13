@@ -39,6 +39,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         (_) {},
       );
       await fetchPreviousMessages();
+
       // await mainApplicationController
       //     .getMessages(widget.conversationId)
       //     .then((onValue) {
@@ -62,18 +63,24 @@ class _MessagesScreenState extends State<MessagesScreen> {
     }
   }
 
+  List<String> messageIds = [];
   @override
   void initState() {
     initFunction();
-    chatService.socket.on('new-message', (data) {
+    chatService.socket.on('new-messageA', (data) {
       chatController.messages.add(Message.fromJson(data));
+      messageIds.clear();
+      if (data["senderType"] == "user") {
+        messageIds.add(data["_id"]);
+        markMessagesAsSeen(messageIds);
+      }
       _scrollToBottom();
     });
 
-    chatService.socket.on('message-sent', (data) {
-      chatController.messages.add(Message.fromJson(data));
-      _scrollToBottom();
-    });
+    // chatService.socket.on('message-sent', (data) {
+    //   chatController.messages.add(Message.fromJson(data));
+    //   _scrollToBottom();
+    // });
 
     chatService.socket.on('typing-start', (data) {
       chatController.isTyping.value = true;
@@ -83,7 +90,29 @@ class _MessagesScreenState extends State<MessagesScreen> {
       chatController.isTyping.value = false;
     });
 
-    chatService.socket.on('previous-messages', (data) {
+    // chatService.socket.on('message-status', (data) {
+    //   print(data);
+    // });
+    chatService.socket.on('message-status', (data) {
+      var messageIds;
+      final status = data['status'];
+      if (data['status'] == "delivered") {
+        messageIds = data['messageId'];
+      } else {
+        for (var messageId in data['messageIds']) {
+          messageIds = messageId;
+          final int index = chatController.messages
+              .indexWhere((message) => message.id == messageIds);
+
+          if (index != -1) {
+            chatController.messages[index].status = status;
+            chatController.messages.refresh();
+          }
+        }
+      }
+    });
+
+    chatService.socket.on('previous-messages', (data) async {
       // chatController.messages.add(Message.fromJson(data));
       if (data != 0 && data != null) {
         final List<dynamic> messageData = data;
@@ -94,6 +123,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         for (var messageMap in dataList) {
           chatController.messages.add(Message.fromJson(messageMap));
         }
+        await _markUnseenMessagesAsSeen();
       }
       _scrollToBottom();
     });
@@ -105,16 +135,27 @@ class _MessagesScreenState extends State<MessagesScreen> {
     });
   }
 
-  void _onRequestAccepted(Map<String, dynamic> data) async {
-    // mainApplicationController.partnerList.clear();
-    // if (data.containsKey('data')) {
-    //   final List<dynamic> noteData = data['data'];
-    //   List<Map<String, dynamic>> dataList =
-    //       noteData.map((data) => data as Map<String, dynamic>).toList();
-    //   mainApplicationController.partnerList.value = dataList;
-    // } else {
-    //   throw Exception('Invalid response format: "data" field not found');
-    // }
+  _markUnseenMessagesAsSeen() {
+    List<String> unseenMessageIds = [];
+    for (var message in chatController.messages) {
+      if (message.status != "seen" && message.senderType == "user") {
+        unseenMessageIds.add(message.id);
+      }
+    }
+    if (unseenMessageIds.isNotEmpty) {
+      markMessagesAsSeen(unseenMessageIds);
+    }
+  }
+
+  @override
+  void dispose() {
+    chatService.socket.off('new-messageA');
+    chatService.socket.off('typing-start');
+    chatService.socket.off('typing-stop');
+    chatService.socket.off('message-status');
+    chatService.socket.off('previous-messages');
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -173,67 +214,166 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       controller: _scrollController,
                       itemBuilder: (context, index) {
                         var message = chatController.messages[index];
-                        return Align(
-                          alignment: message.senderType == 'user'
-                              ? Alignment.centerLeft
-                              : Alignment.centerRight,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
-                            margin: EdgeInsets.only(
-                                bottom: 2,
-                                top: 2,
-                                left: message.senderType == 'user'
-                                    ? 10
-                                    : width * 0.1,
-                                right: message.senderType == 'user'
-                                    ? width * 0.1
-                                    : 10),
-                            decoration: BoxDecoration(
-                              color: message.senderType == 'user'
-                                  ? appColorMessage.withOpacity(0.6)
-                                  : appColor,
-                              borderRadius: BorderRadius.only(
-                                topLeft: const Radius.circular(10),
-                                topRight: const Radius.circular(10),
-                                bottomLeft: message.senderType == 'user'
-                                    ? Radius.zero
-                                    : const Radius.circular(10),
-                                bottomRight: message.senderType == 'user'
-                                    ? const Radius.circular(10)
-                                    : Radius.zero,
+                        chatController.conversationId.value =
+                            message.conversationId;
+                        bool isUser = message.senderType == 'user';
+                        bool showDateSeparator = false;
+                        if (index == 0) {
+                          showDateSeparator = true;
+                        } else {
+                          DateTime currentMessageDate =
+                              DateTime.parse(message.createdAt);
+                          DateTime previousMessageDate = DateTime.parse(
+                              chatController.messages[index - 1].createdAt);
+                          if (currentMessageDate.day !=
+                                  previousMessageDate.day ||
+                              currentMessageDate.month !=
+                                  previousMessageDate.month ||
+                              currentMessageDate.year !=
+                                  previousMessageDate.year) {
+                            showDateSeparator = true;
+                          }
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (showDateSeparator)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade300,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      formatDate1(message.createdAt,
+                                          showTime: false), // Only show date
+                                      style: const TextStyle(
+                                          fontSize: 12, color: Colors.black),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            Align(
+                              alignment: message.senderType == 'user'
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight,
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 4),
+                                    margin: EdgeInsets.only(
+                                        bottom: 6,
+                                        left: isUser ? 10 : 50,
+                                        right: isUser ? 50 : 10),
+                                    decoration: BoxDecoration(
+                                      color: message.senderType == 'user'
+                                          ? appColorMessage.withOpacity(0.6)
+                                          : appColor,
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: const Radius.circular(10),
+                                        topRight: const Radius.circular(10),
+                                        bottomLeft: message.senderType == 'user'
+                                            ? Radius.zero
+                                            : const Radius.circular(10),
+                                        bottomRight:
+                                            message.senderType == 'user'
+                                                ? const Radius.circular(10)
+                                                : Radius.zero,
+                                      ),
+                                    ),
+                                    constraints: BoxConstraints(
+                                      maxWidth: width * 0.8,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          message.senderType == 'user'
+                                              ? CrossAxisAlignment.start
+                                              : CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          message.content,
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            color: message.senderType == 'user'
+                                                ? Colors.black
+                                                : Colors.white,
+                                          ),
+                                        ),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            const SizedBox(width: 10.0),
+                                            Text(
+                                              formatDate1(message.createdAt),
+                                              style: TextStyle(
+                                                fontSize: 5,
+                                                color: isUser
+                                                    ? appColorMessage
+                                                        .withOpacity(0.6)
+                                                    : appColor,
+                                              ),
+                                            ),
+                                            if (!isUser) ...[
+                                              const SizedBox(width: 2),
+                                              Icon(
+                                                  message.status == "seen"
+                                                      ? Icons.done_all
+                                                      : message.status ==
+                                                              "delivered"
+                                                          ? Icons.done_all
+                                                          : Icons.check,
+                                                  size: 10,
+                                                  color: appColor),
+                                            ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Positioned(
+                                      bottom: 9,
+                                      right: isUser ? 54 : 10,
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            formatDate1(message.createdAt),
+                                            style: GoogleFonts.roboto(
+                                              color: isUser
+                                                  ? Colors.grey.shade600
+                                                  : Colors.grey.shade300,
+                                              fontSize: 7,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 2.0),
+                                          if (!isUser) ...[
+                                            Icon(
+                                              message.status == "seen"
+                                                  ? Icons.done_all
+                                                  : message.status ==
+                                                          "delivered"
+                                                      ? Icons.done_all
+                                                      : Icons.check,
+                                              size: 14,
+                                              color: message.status == "seen"
+                                                  ? Colors.blue
+                                                  : Colors.grey,
+                                            ),
+                                          ],
+                                          const SizedBox(width: 2.0),
+                                        ],
+                                      ))
+                                ],
                               ),
                             ),
-                            constraints: BoxConstraints(
-                              maxWidth: width * 0.85,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: message.senderType == 'user'
-                                  ? CrossAxisAlignment.start
-                                  : CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  message.content,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: message.senderType == 'user'
-                                        ? Colors.black
-                                        : Colors.white,
-                                  ),
-                                ),
-                                // const SizedBox(width: 6),
-                                Text(
-                                  formatDate(message.createdAt),
-                                  style: TextStyle(
-                                    fontSize: 8,
-                                    color: message.senderType == 'user'
-                                        ? Colors.grey.shade600
-                                        : Colors.grey.shade300,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          ],
                         );
                       },
                     )),
@@ -288,9 +428,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         style: TextStyle(color: black),
                         onChanged: (value) {
                           if (value.isNotEmpty) {
-                            startTyping(widget.receiverId);
+                            if (chatController.conversationId.value != "") {
+                              startTyping(chatController.conversationId.value);
+                            }
                           } else {
-                            stopTyping(widget.receiverId);
+                            if (chatController.conversationId.value != "") {
+                              stopTyping(chatController.conversationId.value);
+                            }
                           }
                         },
                         decoration: InputDecoration(
@@ -304,7 +448,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     GestureDetector(
                       onTap: () async {
                         await sendMessage(widget.receiverId);
-                        stopTyping(widget.receiverId);
+                        if (chatController.conversationId.value != "") {
+                          stopTyping(chatController.conversationId.value);
+                        }
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -350,12 +496,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
     });
   }
 
-  void startTyping(String receiverId) {
-    chatService.socket.emit('typing-start', {'receiverId': receiverId});
+  void startTyping(String conversationId) {
+    chatService.socket.emit('typing-start', {'conversationId': conversationId});
   }
 
-  void stopTyping(String receiverId) {
-    chatService.socket.emit('typing-stop', {'receiverId': receiverId});
+  void stopTyping(String conversationId) {
+    chatService.socket.emit('typing-stop', {'conversationId': conversationId});
   }
 
   String formatDate(String inputDate) {
@@ -379,15 +525,45 @@ class _MessagesScreenState extends State<MessagesScreen> {
     }
   }
 
+  void markMessagesAsSeen(List<String> messageIds) {
+    chatService.socket.emit('mark-as-seen', {'messageIds': messageIds});
+  }
+
+  String formatDate1(String date, {bool showTime = true}) {
+    DateTime dateTime = DateTime.parse(date);
+    DateTime now = DateTime.now();
+    if (showTime) {
+      return DateFormat('hh:mm a').format(dateTime);
+    } else {
+      if (dateTime.year == now.year &&
+          dateTime.month == now.month &&
+          dateTime.day == now.day) {
+        return 'Today';
+      } else {
+        return DateFormat('dd MMM yyyy').format(dateTime);
+      }
+    }
+  }
+
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
+        _scrollController.jumpTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
         );
       }
     });
+  }
+
+  void _onRequestAccepted(Map<String, dynamic> data) async {
+    // mainApplicationController.partnerList.clear();
+    // if (data.containsKey('data')) {
+    //   final List<dynamic> noteData = data['data'];
+    //   List<Map<String, dynamic>> dataList =
+    //       noteData.map((data) => data as Map<String, dynamic>).toList();
+    //   mainApplicationController.partnerList.value = dataList;
+    // } else {
+    //   throw Exception('Invalid response format: "data" field not found');
+    // }
   }
 }

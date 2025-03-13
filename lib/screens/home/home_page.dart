@@ -356,7 +356,8 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 6),
                     Container(
                       width: width,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.only(
+                          left: 12, right: 2, top: 16, bottom: 16),
                       decoration: BoxDecoration(
                         color: white,
                         borderRadius: BorderRadius.circular(16),
@@ -445,7 +446,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           Image.asset(
                             "assets/gold.png",
-                            width: 150,
+                            width: 128,
                             fit: BoxFit.contain,
                           )
                         ],

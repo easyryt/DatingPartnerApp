@@ -58,6 +58,11 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   @override
   void initState() {
     initFunction();
+    _audioPlayer.onPlayerComplete.listen((event) {
+      setState(() {
+        _isRinging = false;
+      });
+    });
     super.initState();
 
     chatService.socket.on('call-accepted', (_) {
@@ -329,11 +334,21 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   }
 
   void _stopRingingSound() async {
-    await _audioPlayer.stop();
-    if (mounted) {
-      setState(() {
-        _isRinging = false;
-      });
+    // await _audioPlayer.stop();
+    // if (mounted) {
+    //   setState(() {
+    //     _isRinging = false;
+    //   });
+    // }
+    try {
+      if (_isRinging) {
+        await _audioPlayer.stop();
+        setState(() {
+          _isRinging = false;
+        });
+      }
+    } catch (e) {
+      print("Error stopping sound: $e");
     }
   }
 }

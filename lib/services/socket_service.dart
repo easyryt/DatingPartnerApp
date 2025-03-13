@@ -31,6 +31,11 @@ class ChatService {
         'username': 'ef8M6WFNY9LISR2PA9',
         'credential': 'GOKTdvE3sYZQ6NRm',
       },
+      {
+        'urls': 'turn:relay1.expressturn.com:3478',
+        'username': 'efR4AAMWMYPFT40U65',
+        'credential': 'bLSEHxZk2rbABCG8',
+      },
     ]
   };
 
@@ -70,6 +75,15 @@ class ChatService {
     socket.on('new-message', (data) {
       print(data);
     });
+    socket.on('join-room', (data) {
+      print(data);
+    });
+
+    socket.on('chat-list-update', (data) async {
+      if (kDebugMode) {
+        print(data);
+      }
+    });
 
     socket.on('typing-start', (data) {
       print(data);
@@ -98,11 +112,11 @@ class ChatService {
     });
 
     socket.on('call-initiated', (data) {
-      print('Call initiated with ID: ${data['callId']}');
+      print('Call initiated........... with ID: ${data['callId']}');
     });
 
     socket.on('offer', (data) async {
-      print('Received offer');
+      print('Received ..............offer......................');
 
       await _handleOffer(data);
     });

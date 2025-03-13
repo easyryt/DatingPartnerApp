@@ -166,7 +166,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                               Column(
                                 children: [
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 4),
                                   Text(
                                     formatDate(
                                         item["lastMessage"]["createdAt"]),
@@ -189,7 +189,12 @@ class _ChatScreenState extends State<ChatScreen> {
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                               color: white, fontSize: 10),
-                                        )))
+                                        ))),
+                                  if (item["unreadCount"] == 0)
+                                    CircleAvatar(
+                                      radius: 11,
+                                      backgroundColor: white,
+                                    ),
                                 ],
                               )
                             ],
