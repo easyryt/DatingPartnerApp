@@ -349,7 +349,7 @@ class _HomePageState extends State<HomePage> {
             height: height,
             width: width,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 14.0),
               child: SingleChildScrollView(
                 child: Column(
                   children: [
@@ -357,7 +357,7 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       width: width,
                       padding: const EdgeInsets.only(
-                          left: 12, right: 2, top: 16, bottom: 16),
+                          left: 10, right: 2, top: 16, bottom: 16),
                       decoration: BoxDecoration(
                         color: white,
                         borderRadius: BorderRadius.circular(16),
@@ -386,7 +386,7 @@ class _HomePageState extends State<HomePage> {
                                   "₹${profileController.amount.value}",
                                   style: TextStyle(
                                       color: black,
-                                      fontSize: 18,
+                                      fontSize: 17,
                                       fontWeight: FontWeight.w600),
                                 );
                               }),
@@ -446,7 +446,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           Image.asset(
                             "assets/gold.png",
-                            width: 128,
+                            width: 120,
                             fit: BoxFit.contain,
                           )
                         ],

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gad_fly_partner/constant/color_code.dart';
+import 'package:gad_fly_partner/constant/list_common.dart';
 import 'package:gad_fly_partner/controller/main_application_controller.dart';
 import 'package:gad_fly_partner/controller/profile_controller.dart';
 import 'package:gad_fly_partner/screens/bottom_navigation.dart';
@@ -62,7 +63,7 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
             double.parse("${onValue["data"]["walletAmount"]}");
         if (onValue["additionalInfo"]["avatarName"] != null &&
             onValue["additionalInfo"]["gender"] != null) {
-          Get.to(() => const MainHomeScreen());
+          Get.offAll(() => const MainHomeScreen());
         }
       }
     });
@@ -1047,52 +1048,6 @@ class _YourProfileCreateState extends State<YourProfileCreate> {
         ),
       ),
     );
-  }
-
-  List<String> imList = [
-    "Professional Listener",
-    "Joy Provider",
-    "Peace Partner",
-    "Wellness Guide",
-    "Emotional Ally",
-    "Mindful Mentor",
-    "Trusted Advisor",
-    "Empathy Expert",
-    "Compassionate Confidant",
-    "Life Coach",
-    "Support Specialist",
-    "Inspirational Leader",
-    "Motivational Friend",
-    "Calm Companion",
-    "Serenity Seeker",
-    "Healing Facilitator",
-    "Mindfulness Advocate",
-    "Positivity Ambassador"
-  ];
-  List<String> tagList = [
-    "loneliness",
-    "friendship",
-    "knowledge",
-    "empathy",
-    "support",
-    "self-care",
-    "mindfulness",
-    "resilience",
-    "compassion",
-    "inspiration"
-  ];
-
-  void _startRecording() async {}
-
-  void _stopRecording() async {
-    String? path = await audioRecorder.stop();
-    if (path != null) {
-      setState(() {
-        isRecording = false;
-        recordedVoicePath = path;
-      });
-      _timer?.cancel();
-    }
   }
 
   String _formatTime(int seconds) {

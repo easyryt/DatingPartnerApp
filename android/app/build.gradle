@@ -37,6 +37,16 @@ android {
             signingConfig = signingConfigs.debug
         }
     }
+
+    packagingOptions {
+        exclude 'lib/armeabi-v7a/libagora_ai_denoise_extension.so'
+        exclude 'lib/armeabi-v7a/libagora_spatial_audio_extension.so'
+        exclude 'lib/armeabi-v7a/libagora_full_audio_format_extension.so'
+
+        exclude 'lib/arm64-v8a/libagora_ai_denoise_extension.so'
+        exclude 'lib/arm64-v8a/libagora_spatial_audio_extension.so'
+        exclude 'lib/arm64-v8a/libagora_full_audio_format_extension.so'
+    }
 }
 
 flutter {

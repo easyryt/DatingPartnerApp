@@ -4,7 +4,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:gad_fly_partner/constant/api_end_point.dart';
 import 'package:gad_fly_partner/controller/main_application_controller.dart';
 import 'package:gad_fly_partner/controller/profile_controller.dart';
-import 'package:gad_fly_partner/screens/home/incoming_call.dart';
+import 'package:gad_fly_partner/screens/agora_call_screen.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
@@ -79,6 +79,11 @@ class ChatService {
       print(data);
     });
 
+    socket.on('call-accepted', (data) {
+      print("call .............accept.....................");
+      print(data);
+    });
+
     socket.on('chat-list-update', (data) async {
       if (kDebugMode) {
         print(data);
@@ -99,20 +104,31 @@ class ChatService {
     });
 
     socket.on('incoming-call', (data) async {
-      mainApplicationController.currentCallId.value = data['callId'];
-      print('Incoming call from: ${data['caller']}');
+      // mainApplicationController.currentCallId.value = data['callId'];
+      print('Incoming call from: ${data["callerId"]}');
+
       // await setupWebRTC();
       // onMessageReceived!(data);
+      // Get.to(
+      //   () => IncomingCallScreen(
+      //     callerName: data['caller']["avatarName"],
+      //     callId: data['callId'],
+      //   ),
+      // );
       Get.to(
-        () => IncomingCallScreen(
-          callerName: data['caller']["avatarName"],
-          callId: data['callId'],
+        () => PartnerCallScreen(
+          channelName: data['channelName'],
+          name: data['avatarName'],
+          agoraToken: data['token'],
+          callerId: data['callerId'],
         ),
       );
     });
 
     socket.on('call-initiated', (data) {
-      print('Call initiated........... with ID: ${data['callId']}');
+      print('Call initiated........... with ID: $data');
+      // agoraCallService.agoraToken = data["token"];
+      // agoraCallService.channelName = data["channelName"];
     });
 
     socket.on('offer', (data) async {
