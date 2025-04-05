@@ -37,14 +37,17 @@ class AgoraCallService extends GetxController {
       );
     }
 
-    chatService.socket.on('call-accepted', (data) {
+    chatService.socket.on('call-accepted', (data) async {
+      // await engine.enableAudio();
       joinCall(agoraToken.value, data['channelName'], data["partnerId"]);
     });
 
-    chatService.socket.on('call-ended', (data) {
-      engine.leaveChannel();
+    chatService.socket.on('call-ended', (data) async {
+      await engine.leaveChannel();
+      // await engine.disableAudio();
       isJoined.value = false;
       _stopCallTimer();
+      mainApplicationController.getAllAnalytics();
       Get.back();
     });
   }
@@ -98,18 +101,22 @@ class AgoraCallService extends GetxController {
     // Register event handlers
     engine.registerEventHandler(RtcEngineEventHandler(
       onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
-        print("Joined channel successfully");
+        print("Joined channel successfully.........");
         isJoined.value = true;
       },
       onError: (ErrorCodeType err, String msg) {
-        print("Error: $err, Message: $msg");
+        print("Error: ..........$err, Message: ......... $msg");
       },
       onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
-        print("Remote user joined: $remoteUid");
+        print("Remote user joined:.......... $remoteUid");
+      },
+      onLeaveChannel: (RtcConnection connection, RtcStats stats) {
+        print(
+            "Call properly left, connection: ...........${connection.channelId}");
       },
       onUserOffline: (RtcConnection connection, int remoteUid,
           UserOfflineReasonType reason) {
-        print("Remote user offline: $remoteUid");
+        print("Remote user offline:......... $remoteUid");
       },
     ));
   }

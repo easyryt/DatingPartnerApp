@@ -15,6 +15,10 @@ import 'package:permission_handler/permission_handler.dart';
 class MainApplicationController extends GetxController {
   var pageIdx = 0.obs;
   var authToken = ''.obs;
+  var totalEarnings = '0'.obs;
+  var totalMinutes = '0'.obs;
+  var totalCall = 0.obs;
+  var totalMissedCall = 0.obs;
   var selectedStatus = 'Offline'.obs;
   var currentCallId = ''.obs;
   var voiceId = ''.obs;
@@ -49,6 +53,32 @@ class MainApplicationController extends GetxController {
       //   throw Exception('Invalid response format: "data" field not found');
       // }
       transactionList.value = responseData["data"];
+      return true;
+    } else {
+      final responseData = json.decode(response.body);
+      print(responseData);
+      return false;
+    }
+  }
+
+  var allAnalytics = [].obs;
+  Future getAllAnalytics() async {
+    final response = await http.get(
+      Uri.parse(
+          '${ApiEndpoints.baseUrl}/partner/analytics/earningAndSpentTime'),
+      headers: {
+        'x-partner-token': authToken.value,
+      },
+    );
+    if (response.statusCode == 200) {
+      // allAnalytics.clear();
+      final responseData = json.decode(response.body);
+
+      // allAnalytics.value = responseData["data"];
+      totalMissedCall.value = responseData["data"]["totalMissedCall"];
+      totalCall.value = responseData["data"]["totalCall"];
+      totalEarnings.value = responseData["data"]["totalEarnings"];
+      totalMinutes.value = responseData["data"]["totalMinutes"];
       return true;
     } else {
       final responseData = json.decode(response.body);

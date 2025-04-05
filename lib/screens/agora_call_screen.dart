@@ -21,6 +21,7 @@ class PartnerCallScreen extends StatefulWidget {
 
 class _PartnerCallScreenState extends State<PartnerCallScreen> {
   final AgoraCallService controller = Get.put(AgoraCallService());
+
   final AudioPlayer _audioPlayer = AudioPlayer();
   @override
   void initState() {

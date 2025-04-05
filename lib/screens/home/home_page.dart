@@ -50,12 +50,15 @@ class _HomePageState extends State<HomePage> {
           }
         },
       );
+      await mainApplicationController.getAllChat();
+      await mainApplicationController.getAllTransaction();
     }
   }
 
   @override
   void initState() {
     mainApplicationController.checkMicrophonePermission();
+    initFunction();
     profileController.getProfile().then((onValue) {
       if (onValue != null) {
         profileController.isAvailable.value = onValue["data"]["isAvailable"];
@@ -63,9 +66,7 @@ class _HomePageState extends State<HomePage> {
             double.parse("${onValue["data"]["walletAmount"]}");
       }
     });
-    mainApplicationController.getAllTransaction();
-    mainApplicationController.getAllChat();
-    initFunction();
+    mainApplicationController.getAllAnalytics();
 
     // chatService.socket.on('incoming-call', (data) async {
     //   _playRingingSound();
@@ -561,7 +562,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           child: const Center(
                             child: Text(
-                              "This Week",
+                              " ALL ",
                               style: TextStyle(
                                   fontSize: 11, fontWeight: FontWeight.w500),
                             ),
@@ -581,11 +582,13 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.grey[500]),
                         ),
                         const SizedBox(width: 6),
-                        const Text(
-                          "1.38k",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500, fontSize: 14),
-                        ),
+                        Obx(() {
+                          return Text(
+                            mainApplicationController.totalEarnings.value,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500, fontSize: 14),
+                          );
+                        }),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -600,11 +603,13 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.grey[500]),
                         ),
                         const SizedBox(width: 6),
-                        const Text(
-                          "155",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500, fontSize: 14),
-                        ),
+                        Obx(() {
+                          return Text(
+                            mainApplicationController.totalMinutes.value,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500, fontSize: 14),
+                          );
+                        }),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -619,11 +624,13 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.grey[500]),
                         ),
                         const SizedBox(width: 6),
-                        const Text(
-                          "27",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500, fontSize: 14),
-                        ),
+                        Obx(() {
+                          return Text(
+                            "${mainApplicationController.totalCall.value}",
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500, fontSize: 14),
+                          );
+                        }),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -638,11 +645,13 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.grey[500]),
                         ),
                         const SizedBox(width: 6),
-                        const Text(
-                          "2",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500, fontSize: 14),
-                        ),
+                        Obx(() {
+                          return Text(
+                            "${mainApplicationController.totalMissedCall.value}",
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500, fontSize: 14),
+                          );
+                        }),
                       ],
                     ),
                     const SizedBox(height: 60),
